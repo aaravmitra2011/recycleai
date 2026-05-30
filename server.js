@@ -35,7 +35,7 @@ app.post('/api/chat', async (req, res) => {
         'Authorization': 'Bearer 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'
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192',
+        model: 'llama-3.3-70b-versatile',
         messages: groqMessages,
         max_tokens: max_tokens || 1000
       })
