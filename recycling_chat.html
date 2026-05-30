@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RecycleAI</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#0d0d0d;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:0}
+.shell{width:100%;max-width:700px;height:640px;display:flex;flex-direction:column;background:#111;border:1px solid #222;border-radius:18px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:#141414;border-bottom:1px solid #1e1e1e}
+.logo{width:36px;height:36px;flex-shrink:0}
+.htext h2{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:#f0f0f0;letter-spacing:.02em}
+.htext p{font-size:11px;color:#555;margin-top:2px;font-weight:300}
+.header-right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.dot{width:7px;height:7px;background:#2ecc71;border-radius:50%;box-shadow:0 0 0 2px rgba(46,204,113,.18)}
+.img-btn{background:none;border:1px solid #2a2a2a;border-radius:8px;color:#666;cursor:pointer;padding:5px 9px;font-size:11px;display:flex;align-items:center;gap:5px;transition:all .15s}
+.img-btn:hover{border-color:#2ecc71;color:#2ecc71}
+.img-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#file-input{display:none}
+.msgs{flex:1;overflow-y:auto;padding:22px 18px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+.msg{display:flex;gap:10px;align-items:flex-end;animation:fu .28s ease}
+.msg.user{flex-direction:row-reverse}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.av{width:28px;height:28px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid #222;background:#181818;overflow:hidden}
+.av.u{background:#1a2e1a;border-color:#2a3e2a;color:#5ec97a;font-size:11px;font-weight:500}
+.bubble{max-width:80%;padding:10px 14px;font-size:13.5px;line-height:1.7;color:#ddd;background:#181818;border:1px solid #222;border-radius:14px}
+.msg.bot .bubble{border-radius:4px 14px 14px 14px}
+.msg.user .bubble{background:#1a2e1a;border-color:#2a3e2a;color:#c5f0cc;border-radius:14px 4px 14px 14px}
+/* image in bubble */
+.bubble img.msg-img{max-width:100%;border-radius:10px;margin-bottom:8px;display:block;border:1px solid #2a2a2a}
+.bubble img.thumb{max-width:220px;max-height:160px;object-fit:cover;border-radius:10px;display:block;border:1px solid #2a3e2a}
+/* image grid in bot response */
+.img-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.img-grid img{width:calc(50% - 4px);border-radius:9px;object-fit:cover;max-height:130px;border:1px solid #2a2a2a;cursor:pointer;transition:opacity .15s}
+.img-grid img:hover{opacity:.85}
+.img-grid img.single{width:100%;max-height:180px}
+/* resin code table */
+.resin-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.resin-table th{background:#1a2e1a;color:#4eca74;padding:5px 8px;text-align:left;font-weight:500;border:1px solid #222}
+.resin-table td{padding:5px 8px;border:1px solid #1e1e1e;color:#bbb;vertical-align:top}
+.resin-table tr:nth-child(even) td{background:#161616}
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:500;margin-bottom:6px}
+.badge.yes{background:#0d2b16;color:#4eca74;border:1px solid #1a4a28}
+.badge.no{background:#2b0d0d;color:#e07070;border:1px solid #4a1a1a}
+.badge.maybe{background:#2b2200;color:#d4a017;border:1px solid #4a3800}
+.bdot{width:5px;height:5px;border-radius:50%}
+.badge.yes .bdot{background:#2ecc71}
+.badge.no .bdot{background:#e74c3c}
+.badge.maybe .bdot{background:#f39c12}
+.rname{font-weight:500;font-size:13.5px;color:#eee;margin-bottom:2px}
+.rcat{font-size:10.5px;color:#555;margin-bottom:5px}
+.rnote{font-size:12.5px;color:#aaa;line-height:1.6}
+/* typing */
+.typing{display:flex;gap:4px;align-items:center;padding:10px 14px}
+.typing span{width:5px;height:5px;border-radius:50%;background:#444;animation:bl 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bl{0%,80%,100%{opacity:.2}40%{opacity:1}}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;padding:10px 18px 8px;border-top:1px solid #1a1a1a}
+.chip{padding:5px 12px;background:#181818;border:1px solid #252525;border-radius:20px;font-size:11.5px;color:#888;cursor:pointer;transition:all .15s;white-space:nowrap}
+.chip:hover{background:#1f2f1f;border-color:#2a3e2a;color:#5ec97a}
+/* input row */
+.inputrow{display:flex;gap:10px;padding:12px 16px;border-top:1px solid #1a1a1a;background:#111;align-items:center}
+.inp{flex:1;background:#181818;border:1px solid #252525;border-radius:24px;padding:9px 16px;font-size:13.5px;color:#eee;outline:none;font-family:'DM Sans',sans-serif;transition:border .15s}
+.inp::placeholder{color:#444}
+.inp:focus{border-color:#2ecc71}
+.inp:disabled{opacity:.5}
+.send{width:38px;height:38px;border-radius:50%;background:#1a4a28;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.send:hover{background:#2ecc71}
+.send svg{width:16px;height:16px;fill:none;stroke:#2ecc71;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.send:hover svg{stroke:#111}
+.send:disabled{opacity:0.4;cursor:not-allowed}
+.send:disabled:hover{background:#1a4a28}
+.send:disabled:hover svg{stroke:#2ecc71}
+/* typewriter */
+.cursor{display:inline-block;width:2px;height:1em;background:#2ecc71;margin-left:2px;vertical-align:text-bottom;animation:blink-cursor .7s steps(1) infinite}
+@keyframes blink-cursor{0%,100%{opacity:1}50%{opacity:0}}
+/* image preview above input */
+#img-preview-bar{display:none;padding:8px 16px 0;background:#111;align-items:center;gap:10px}
+#img-preview-bar img{width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #2a3e2a}
+#img-preview-bar .remove-img{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+#img-preview-bar span{font-size:11px;color:#555}
+/* tip tag */
+.tip{font-size:10.5px;color:#555;margin-top:6px;font-style:italic}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="25,5 75,5 95,25 95,55 75,75 50,75 75,95 95,115 25,115 5,95 5,65 25,45 50,45 25,25" fill="none" stroke="#2ecc71" stroke-width="7" stroke-linejoin="round"/>
+        <polygon points="25,5 75,5 95,25 95,55 75,75 50,75 75,95 95,115 25,115 5,95 5,65 25,45 50,45 25,25" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="htext">
+      <h2>RecycleAI</h2>
+      <p>Your intelligent recycling assistant</p>
+    </div>
+    <div class="header-right">
+      <button class="img-btn" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Send image
+      </button>
+      <input type="file" id="file-input" accept="image/*" onchange="handleImageSelect(event)">
+      <div class="dot"></div>
+    </div>
+  </div>
+
+  <div id="img-preview-bar">
+    <img id="img-preview-thumb" src="" alt="preview">
+    <span>Image ready to send</span>
+    <button class="remove-img" onclick="clearImage()" title="Remove">✕</button>
+  </div>
+
+  <div class="msgs" id="msgs">
+    <div class="msg bot">
+      <div class="av">
+        <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="25,5 75,5 95,25 95,55 75,75 50,75 75,95 95,115 25,115 5,95 5,65 25,45 50,45 25,25" fill="none" stroke="#2ecc71" stroke-width="9" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="bubble">
+        Hey! I'm RecycleAI — a proper AI recycling assistant powered by Claude. Ask me <em>anything</em>:<br><br>
+        • <strong style="color:#eee">Material questions</strong> — "can I recycle bubble wrap?"<br>
+        • <strong style="color:#eee">General questions</strong> — "what is a resin code?", "how does recycling work?"<br>
+        • <strong style="color:#eee">Send an image</strong> — upload a photo of an item and I'll tell you how to dispose of it ♻️
+      </div>
+    </div>
+  </div>
+
+  <div class="chips">
+    <div class="chip" onclick="ask('What is a resin code?')">What is a resin code?</div>
+    <div class="chip" onclick="ask('can I recycle a greasy pizza box?')">greasy pizza box?</div>
+    <div class="chip" onclick="ask('what happens to recycled plastic?')">what happens to recycled plastic?</div>
+    <div class="chip" onclick="ask('copper wire')">copper wire</div>
+    <div class="chip" onclick="ask('is silk recyclable?')">is silk recyclable?</div>
+  </div>
+
+  <div class="inputrow">
+    <input class="inp" id="inp" type="text" placeholder="Ask anything about recycling…" onkeydown="if(event.key==='Enter')send()">
+    <button class="send" id="sendbtn" onclick="send()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+// ── Image handling ─────────────────────────────────────────────────────────
+let pendingImageB64 = null;
+let pendingImageMime = null;
+
+function handleImageSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    pendingImageB64 = dataUrl.split(',')[1];
+    pendingImageMime = file.type;
+    document.getElementById('img-preview-thumb').src = dataUrl;
+    document.getElementById('img-preview-bar').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function clearImage() {
+  pendingImageB64 = null;
+  pendingImageMime = null;
+  document.getElementById('img-preview-bar').style.display = 'none';
+  document.getElementById('img-preview-thumb').src = '';
+}
+
+// ── Local DB (fallback + Claude context) ──────────────────────────────────
+const DB = [
+  ["plastic bottle",true,"Plastic","Rinse before recycling. Check the resin code — #1 (PET) and #2 (HDPE) are most widely accepted."],
+  ["plastic bag",false,"Plastic","Not accepted curbside. Drop off at grocery store collection bins — they go to specialist film recyclers."],
+  ["styrofoam",false,"Plastic","Polystyrene (#6) is almost never accepted curbside. Some specialist drop-off sites exist."],
+  ["plastic straw",false,"Plastic","Too small for sorting machines. Dispose in general waste, or switch to reusable alternatives."],
+  ["plastic wrap",false,"Plastic","Take to store drop-off bins for plastic film recycling alongside plastic bags."],
+  ["plastic container",true,"Plastic","Rinse thoroughly. Most #1, #2, and #5 containers are accepted curbside."],
+  ["plastic cup",false,"Plastic","Disposable cups are usually not accepted curbside due to mixed materials."],
+  ["bubble wrap",false,"Plastic","Drop off at store film plastic collection points — same bin as plastic bags."],
+  ["plastic cutlery",false,"Plastic","Too small and often mixed materials. Goes in general waste."],
+  ["pvc pipe",false,"Plastic","PVC (#3) is rarely recyclable. Check for specialty plastic recyclers in your area."],
+  ["cardboard",true,"Paper","Flatten boxes. Keep dry — wet cardboard is contaminated and not recyclable."],
+  ["newspaper",true,"Paper","Widely recyclable. Keep dry and away from food contamination."],
+  ["magazine",true,"Paper","Glossy paper is fine. Remove plastic sleeves or wrappers first."],
+  ["office paper",true,"Paper","Widely accepted. Shredded paper may need to be bagged separately — check locally."],
+  ["paper bag",true,"Paper","Remove any staples or handles before recycling."],
+  ["pizza box",false,"Paper","Grease contaminates paper recycling. Tear off the clean lid to recycle that part; bin the greasy base."],
+  ["paper cup",false,"Paper","Most have a plastic PE lining — not recyclable in standard paper streams. Some specialist schemes exist."],
+  ["tissue paper",false,"Paper","Too thin and often food-contaminated. Compost if possible."],
+  ["paper towel",false,"Paper","Compostable if food-soiled, otherwise general waste."],
+  ["wax paper",false,"Paper","Wax coating prevents fibre separation — not recyclable. Goes in general waste."],
+  ["receipt",false,"Paper","Thermal paper contains BPA — not recyclable and potentially hazardous. General waste."],
+  ["envelope",true,"Paper","Remove plastic windows if possible before recycling."],
+  ["wrapping paper",false,"Paper","Most is plastic-coated or foil-laminated. Do the scrunch test — if it scrunches and stays, it's pure paper and recyclable."],
+  ["cardboard tube",true,"Paper","Toilet and kitchen roll tubes are widely accepted in paper recycling."],
+  ["glass bottle",true,"Glass","Rinse and remove caps. Some schemes require colour-sorting (clear, brown, green)."],
+  ["glass jar",true,"Glass","Rinse thoroughly. Remove metal lids and recycle separately."],
+  ["broken glass",false,"Glass","Dangerous for sorting workers. Wrap safely in newspaper and place in general waste."],
+  ["window glass",false,"Glass","Different chemical composition — not compatible with bottle glass recycling banks."],
+  ["mirror",false,"Glass","Coated glass — not recyclable. Take to a household waste centre."],
+  ["light bulb",false,"Glass","Standard incandescent bulbs go in general waste. CFL/fluorescent bulbs need specialist e-waste disposal (contain mercury)."],
+  ["drinking glass",false,"Glass","Borosilicate (Pyrex) and soda-lime glasses melt at different temperatures — not compatible with bottle bank recycling."],
+  ["aluminium can",true,"Metal","One of the most valuable and infinitely recyclable materials. Rinse and crush to save space."],
+  ["steel can",true,"Metal","Widely recyclable. Rinse and optionally leave lids tucked inside."],
+  ["aluminium foil",true,"Metal","Clean foil only — food residue contaminates the batch. Ball up small pieces before recycling."],
+  ["aerosol can",true,"Metal","Empty completely before recycling. Do not pierce or crush — residual pressure is a fire risk."],
+  ["scrap metal",true,"Metal","Take to a scrap metal dealer or household waste centre. Most metals are valuable and fully recyclable."],
+  ["copper",true,"Metal","Extremely valuable — take to a scrap metal dealer. All forms accepted: wire, pipe, fittings."],
+  ["copper wire",true,"Metal","Strip insulation if possible for better value. Scrap dealers pay well for clean copper wire."],
+  ["copper pipe",true,"Metal","One of the most recyclable metals. Scrap dealers actively seek copper pipe."],
+  ["iron",true,"Metal","Recyclable at scrap metal dealers or household waste centres. Remove non-metal attachments first."],
+  ["cast iron",true,"Metal","Recyclable as scrap metal. Donate functional cookware instead — it lasts generations."],
+  ["stainless steel",true,"Metal","Recyclable at scrap metal facilities. Pots, pans, cutlery — all accepted."],
+  ["steel",true,"Metal","Highly recyclable and widely accepted. Take to a scrap dealer or metal recycling bin."],
+  ["brass",true,"Metal","Valuable scrap metal — taps, fittings, ornaments, valves. Scrap dealers pay well for brass."],
+  ["zinc",true,"Metal","Recyclable as scrap metal. Commonly found in galvanised steel and die-cast components."],
+  ["lead",false,"Metal","Hazardous material — do NOT put in general recycling. Take to a certified hazardous waste facility."],
+  ["titanium",true,"Metal","Recyclable at specialist scrap metal dealers. High-value aerospace and medical metal."],
+  ["nickel",true,"Metal","Recyclable at scrap metal facilities. Commonly alloyed in stainless steel."],
+  ["tin",true,"Metal","Fully recyclable. Tin cans and tin-plated materials go to metal recycling."],
+  ["wire hanger",false,"Metal","Not accepted curbside — gets tangled in sorting equipment. Return to dry cleaners or donate."],
+  ["paint can",false,"Metal","Hazardous waste when wet. Let paint dry completely first, then the empty can may be recyclable as metal."],
+  ["battery",false,"Metal","Hazardous! Never put in general recycling. Drop off at designated battery collection points in shops, supermarkets, or councils."],
+  ["mobile phone",false,"Electronics","E-waste. Donate, trade in, or take to an e-waste recycling centre. Contains valuable recoverable metals."],
+  ["laptop",false,"Electronics","E-waste. Many manufacturers (Apple, Dell, HP) offer take-back programmes."],
+  ["television",false,"Electronics","E-waste. Take to a household waste centre, or use retailer take-back when buying a replacement."],
+  ["charger",false,"Electronics","E-waste. Bundle with other small electronics for recycling."],
+  ["ink cartridge",true,"Electronics","Many office stores (Staples, Office Depot) and manufacturers have free take-back schemes."],
+  ["wood",false,"Wood","Untreated wood: chip, compost, or take to a wood recycling centre. Treated, painted, or varnished wood must go to a household waste centre — never burn treated wood."],
+  ["untreated wood",true,"Wood","Can be composted, chipped for mulch, or taken to a wood recycling centre. Great for garden use."],
+  ["treated wood",false,"Wood","Contains preservative chemicals — do not compost or burn. Household waste or timber recycling centre only."],
+  ["plywood",false,"Wood","Glued composite layers prevent composting. Take to a wood recycling or waste centre."],
+  ["mdf",false,"Wood","Contains urea-formaldehyde resins — do not burn or compost. Household waste centre only."],
+  ["wooden furniture",false,"Wood","Donate to charity if in good condition. Otherwise a furniture recycling charity or bulky waste collection."],
+  ["wooden pallet",true,"Wood","High reuse value — many logistics companies, farms, and DIY enthusiasts actively collect pallets."],
+  ["hardwood",true,"Wood","Untreated hardwood is recyclable as biomass fuel or reclaimed timber. High value at reclamation yards."],
+  ["softwood",true,"Wood","Untreated softwood can be chipped or composted. Widely accepted at green waste facilities."],
+  ["sawdust",true,"Wood","Compostable. Also excellent as animal bedding, garden mulch, or fire starter (untreated only)."],
+  ["cloth",false,"Textiles","Donate clean cloth to charity. Worn or dirty fabric goes to textile recycling banks — never landfill."],
+  ["clothing",false,"Textiles","Donate if wearable. Textile banks or charity shops for worn items. Many brands now offer in-store recycling."],
+  ["cotton",false,"Textiles","Natural fibre — donate wearable items, compost pure cotton scraps in small amounts, or use textile recycling banks."],
+  ["denim",false,"Textiles","Donate wearable jeans. Brands like H&M, Levi's, and Nudie Jeans accept old denim for recycling."],
+  ["linen",false,"Textiles","Natural flax fibre — donate, compost clean scraps, or take to a textile recycling bank."],
+  ["polyester",false,"Textiles","Synthetic fibre — donate wearable items. Specialist recyclers (like Worn Again) process synthetic textiles."],
+  ["nylon",false,"Textiles","Donate wearable items. Terracycle and some brands accept nylon, especially carpets and hosiery."],
+  ["wool",false,"Textiles","Natural fibre — donate wearable woollens. Pure wool scraps can be composted slowly."],
+  ["fabric",false,"Textiles","Donate clean fabric to sewers, craft groups, or charity. Compost natural fibres; textile banks for synthetics."],
+  ["carpet",false,"Textiles","Specialist carpet recyclers or household waste centres. Some manufacturers (Interface, Carpet Recycling UK) offer take-back."],
+  ["curtains",false,"Textiles","Donate to charity if in good condition. Otherwise textile recycling bank or household waste centre."],
+  ["bedsheets",false,"Textiles","Donate if clean. Otherwise textile banks or repurpose as cleaning rags before disposing."],
+  ["towels",false,"Textiles","Donate to animal shelters — they always need them. Otherwise textile recycling banks."],
+  ["shoes",false,"Textiles","Donate to charity or specialist shoe collection points. Nike's Reuse-A-Shoe programme accepts worn trainers."],
+  ["silk",false,"Silk","Natural protein fibre — donate wearable garments. Pure silk scraps can be composted slowly. Seek specialist natural fibre recyclers for larger quantities."],
+  ["silk fabric",false,"Silk","Donate usable pieces to sewers or craft groups. Compost clean 100% silk scraps in a hot compost heap."],
+  ["silk scarf",false,"Silk","Donate to charity shops or vintage stores — silk scarves have high resale value. Compost if too worn."],
+  ["silk clothing",false,"Silk","Donate if wearable. Look for luxury textile recycling programmes or natural fibre composting schemes."],
+  ["rubber",false,"Rubber","Most rubber is not accepted curbside. Natural rubber scraps can be composted in small amounts. Synthetic rubber goes to specialist recyclers."],
+  ["natural rubber",false,"Rubber","Derived from rubber trees — biodegradable in composting conditions. Small amounts can be home-composted."],
+  ["synthetic rubber",false,"Rubber","Petroleum-based polymer — not biodegradable. Take to specialist rubber or tyre recyclers."],
+  ["tyre",false,"Rubber","Take to a tyre retailer or household waste centre. Old tyres are shredded into crumb rubber for playground surfaces and road filler."],
+  ["rubber band",false,"Rubber","Too small for curbside recycling. Reuse wherever possible, or dispose in general waste."],
+  ["rubber gloves",false,"Rubber","General waste unless a specialist rubber recycler is accessible. Switch to reusable alternatives."],
+  ["rubber mat",false,"Rubber","Take to a rubber recycler or household waste centre. Gym mats are sometimes donated to community spaces."],
+  ["foam rubber",false,"Rubber","Not generally recyclable curbside. Specialist foam recyclers handle mattresses and upholstered furniture."],
+  ["latex",false,"Rubber","Natural latex is biodegradable in composting conditions. Synthetic latex goes in general waste."],
+  ["food waste",false,"Organic","Compost at home or use a food waste collection bin if available in your area."],
+  ["cooking oil",false,"Organic","Never pour down the drain — it blocks sewers. Bottle it and take to a cooking oil recycling point, or check if your council collects it."],
+  ["coffee grounds",false,"Organic","Excellent for composting, or use as a garden soil amendment. Some cafes also collect them."],
+  ["paint",false,"Hazardous","Take to a household hazardous waste facility or Community Repaint scheme. Never pour down the drain."],
+  ["medication",false,"Hazardous","Return to a pharmacy — they have legal disposal routes. Never flush or put in general waste."],
+  ["motor oil",false,"Hazardous","Take to an auto shop, petrol station, or hazardous waste facility. Collected oil is re-refined."],
+  ["bleach bottle",true,"Hazardous","Rinse the empty bottle thoroughly three times, then recycle as plastic (#2 HDPE)."],
+  ["chemical",false,"Hazardous","Household hazardous waste facility only. Check the product label for specific disposal instructions."],
+];
+
+// ── Levenshtein fuzzy search ────────────────────────────────────────────────
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>j===0?i:0));
+  for(let j=1;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+function fuzzyLookup(q){
+  q=q.toLowerCase().trim();
+  const words=q.split(/\s+/);
+  const scored=DB.map(r=>{
+    const name=r[0];
+    if(name===q||name.includes(q)||q.includes(name))return{r,score:0,exact:true};
+    const nameWords=name.split(/\s+/);
+    let minDist=Infinity;
+    for(const qw of words)for(const nw of nameWords){
+      if(qw.length<3)continue;
+      const d=levenshtein(qw,nw);
+      const threshold=Math.max(1,Math.floor(nw.length*0.35));
+      if(d<=threshold)minDist=Math.min(minDist,d);
+    }
+    return{r,score:minDist,exact:false};
+  }).filter(x=>x.score<=2);
+  scored.sort((a,b)=>a.score-b.score);
+  const exactHits=scored.filter(x=>x.exact);
+  if(exactHits.length)return{results:exactHits.map(x=>x.r),fuzzy:false};
+  if(scored.length)return{results:scored.slice(0,3).map(x=>x.r),fuzzy:true};
+  return{results:[],fuzzy:false};
+}
+
+function buildDBContext(){
+  return DB.map(r=>`- ${r[0]}: ${r[1]?'RECYCLABLE':'NOT RECYCLABLE'} (${r[2]}) — ${r[3]}`).join('\n');
+}
+
+// ── Claude API ──────────────────────────────────────────────────────────────
+async function askClaude(userMsg, history, imageB64, imageMime){
+  const systemPrompt=`You are RecycleAI — the Claude of recycling. Sharp, friendly, and genuinely useful. You know everything about recycling, sustainability, and waste — and you make it feel effortless to learn.
+
+LOCAL DATABASE (primary reference):
+${buildDBContext()}
+
+YOUR STYLE:
+- Medium-length responses. Not too short, not an essay. Just right.
+- Lead with a clear verdict or direct answer, then support it with 2–4 punchy bullet points using relevant emojis.
+- Use emojis naturally as bullet markers and for emphasis — ♻️ 🗑️ 🌱 ⚠️ 💡 🧲 🔋 🪣 🧵 🌍 🔥 — pick ones that fit the content.
+- Be warm and direct. Like a smart friend who knows recycling, not a government pamphlet.
+- For educational questions (resin codes, how recycling works, composting, circular economy etc): explain it properly with bullet points, keep it punchy and interesting.
+- For image analysis: identify the item, give a clear verdict, then 2–3 bullet tips.
+- For nuanced questions: give a real answer with your reasoning, not a hedge.
+- Never say "as an AI" or "I don't have real-time data" — just answer.
+- Mention local variation briefly when relevant (rules vary by council/area).
+- Max ~120 words. If a list makes it clearer, use a list. Never write paragraphs when bullets work better.
+- NEVER use markdown. No **bold**, no *italics*, no headers. Plain text and emoji only.`;
+
+  const userContent=[];
+  if(imageB64){
+    userContent.push({type:'image',source:{type:'base64',media_type:imageMime,data:imageB64}});
+    userContent.push({type:'text',text:userMsg||'What is this item and how should I dispose of or recycle it?'});
+  } else {
+    userContent.push({type:'text',text:userMsg});
+  }
+
+  const messages=[...history,{role:'user',content:userContent}];
+
+  const resp=await fetch('/api/chat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:systemPrompt,
+      messages
+    })
+  });
+  if(!resp.ok)throw new Error(`API ${resp.status}`);
+  const data=await resp.json();
+  return data.content.find(b=>b.type==='text')?.text||'Sorry, no response received.';
+}
+
+// ── Typewriter ─────────────────────────────────────────────────────────────
+function typewrite(el,text,done){
+  let i=0;
+  const cursor=document.createElement('span');
+  cursor.className='cursor';
+  el.appendChild(cursor);
+  const iv=setInterval(()=>{
+    if(i<text.length){
+      cursor.before(document.createTextNode(text[i++]));
+      const m=el.closest('.msgs');
+      if(m)m.scrollTop=m.scrollHeight;
+    } else {
+      clearInterval(iv);
+      cursor.remove();
+      if(done)done();
+    }
+  },14);
+}
+
+// ── UI helpers ─────────────────────────────────────────────────────────────
+function botAv(){
+  return `<div class="av"><svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg"><polygon points="25,5 75,5 95,25 95,55 75,75 50,75 75,95 95,115 25,115 5,95 5,65 25,45 50,45 25,25" fill="none" stroke="#2ecc71" stroke-width="9" stroke-linejoin="round"/></svg></div>`;
+}
+
+function addMsg(content,isUser,imageDataUrl){
+  const msgs=document.getElementById('msgs');
+  const d=document.createElement('div');
+  d.className='msg '+(isUser?'user':'bot');
+  if(isUser){
+    let inner='';
+    if(imageDataUrl) inner+=`<img class="thumb" src="${imageDataUrl}" alt="uploaded image"><br>`;
+    if(content) inner+=content;
+    d.innerHTML=`<div class="av u">You</div><div class="bubble">${inner}</div>`;
+    msgs.appendChild(d);
+    msgs.scrollTop=msgs.scrollHeight;
+    return null;
+  } else {
+    d.innerHTML=botAv()+`<div class="bubble"></div>`;
+    msgs.appendChild(d);
+    msgs.scrollTop=msgs.scrollHeight;
+    return d.querySelector('.bubble');
+  }
+}
+
+function showTyping(){
+  const msgs=document.getElementById('msgs');
+  const d=document.createElement('div');
+  d.className='msg bot';d.id='typing-indicator';
+  d.innerHTML=botAv()+`<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typing-indicator');if(t)t.remove();}
+function setLocked(v){
+  document.getElementById('inp').disabled=v;
+  document.getElementById('sendbtn').disabled=v;
+}
+
+// ── Conversation state ─────────────────────────────────────────────────────
+const history=[];
+
+// ── Send ───────────────────────────────────────────────────────────────────
+async function send(){
+  const inp=document.getElementById('inp');
+  const val=inp.value.trim();
+  const imgB64=pendingImageB64;
+  const imgMime=pendingImageMime;
+  const imgSrc=document.getElementById('img-preview-thumb').src;
+
+  if(!val&&!imgB64)return;
+  inp.value='';
+  setLocked(true);
+
+  // Show user message
+  addMsg(val,true,imgB64?imgSrc:null);
+
+  // Build history entry for user
+  const userContent=[];
+  if(imgB64){
+    userContent.push({type:'image',source:{type:'base64',media_type:imgMime,data:imgB64}});
+    userContent.push({type:'text',text:val||'How should I dispose of or recycle this item?'});
+  } else {
+    userContent.push({type:'text',text:val});
+  }
+  history.push({role:'user',content:userContent});
+
+  if(imgB64)clearImage();
+  showTyping();
+
+  try {
+    const rawReply=await askClaude(val,history.slice(0,-1),imgB64,imgMime);
+    const reply=rawReply.replace(/\*\*(.*?)\*\*/g,'$1').replace(/\*(.*?)\*/g,'$1');
+    removeTyping();
+    const bubble=addMsg('',false);
+    typewrite(bubble,reply,()=>{
+      history.push({role:'assistant',content:[{type:'text',text:reply}]});
+      setLocked(false);
+      inp.focus();
+    });
+  } catch(err){
+    removeTyping();
+    // Fallback: fuzzy DB search
+    if(val){
+      const {results,fuzzy}=fuzzyLookup(val);
+      let html='';
+      if(!results.length){
+        html=`I'm having trouble reaching the AI right now. I also don't have <strong style="color:#eee">${val}</strong> in my local database — try a more specific material name.`;
+      } else {
+        if(fuzzy)html+=`<div style="font-size:10.5px;color:#666;font-style:italic;margin-bottom:6px">Closest match found (offline fuzzy search):</div>`;
+        html+=results.map(r=>{
+          const[name,rec,cat,note]=r;
+          return `<div class="badge ${rec?'yes':'no'}"><div class="bdot"></div>${rec?'✓ Recyclable':'✕ Not Recyclable'}</div><div class="rname">${name[0].toUpperCase()+name.slice(1)}</div><div class="rcat">Category: ${cat}</div><div class="rnote">${note}</div>`;
+        }).join('<hr style="border:none;border-top:1px solid #222;margin:10px 0">');
+      }
+      const bubble=addMsg('',false);
+      bubble.innerHTML=html;
+      history.push({role:'assistant',content:[{type:'text',text:html}]});
+    } else {
+      const bubble=addMsg('',false);
+      bubble.textContent="I couldn't reach the AI right now. Please try again in a moment.";
+    }
+    setLocked(false);
+  }
+}
+
+function ask(text){
+  document.getElementById('inp').value=text;
+  send();
+}
+</script>
+</body>
+</html>
