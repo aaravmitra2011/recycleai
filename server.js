@@ -42,6 +42,12 @@ app.post('/api/chat', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log('Groq response:', JSON.stringify(data));
+
+    if (data.error) {
+      console.error('Groq error:', data.error);
+      return res.status(500).json({ error: data.error.message });
+    }
 
     // Convert Groq response back to Anthropic-style format the frontend expects
     const text = data.choices?.[0]?.message?.content || 'Sorry, no response received.';
