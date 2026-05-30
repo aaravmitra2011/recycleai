@@ -1,4 +1,4 @@
-const express = require('express');
+cconst express = require('express');
 const cors = require('cors');
 const path = require('path');
 
@@ -16,7 +16,7 @@ app.post('/api/chat', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': 'YOUR_API_KEY_HERE',
+        'x-api-key': '766de8e5868435b18513793ebff71d11',
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify(req.body)
